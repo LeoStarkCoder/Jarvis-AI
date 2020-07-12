@@ -1,11 +1,27 @@
+from __future__ import print_function
+import smtplib,webbrowser,winsound,pyttsx3,wikipedia,bs4,pyowm,geocoder,pyautogui,sys,random,cv2,requests,psutil,face_recognition,pyaztro,pyautogui,logging,pickle,os.path,email,imaplib,cbpy as cb,numpy as np,wolframalpha
+from urllib.request import urlopen
+from playsound import playsound #pip install playsound
+from PyDictionary import PyDictionary #pip install PyDictionary
+from bs4 import BeautifulSoup #pip install bs4
+from pywebostv.discovery import *
+from pywebostv.discovery import *
+from phone_iso3166.country import phone_country
+import pycountry
+import phonenumbers
+from pywebostv.connection import *
+from pywebostv.controls import *
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from email.header import decode_header
+from geopy.distance import geodesic 
+from twilio.rest import TwilioRestClient
+import yt_search
+import urlencode
 import datetime
-import os
 import smtplib
-import webbrowser #pip install webbrowser
-import winsound
-import pyttsx3  # pip install pyttsx3
 import speech_recognition as sr  # pip install speechRecognition
-import wikipedia  # pip install wkipedia
 import bs4 #pip install bs4
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen
@@ -26,50 +42,45 @@ import wolframalpha #pip install wolframalpha
 from bs4 import BeautifulSoup
 from PyDictionary import PyDictionary
 
-
-
-
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 print(voices[0].id)
-engine.setProperty('voice', voices[1].id)
+engine.setProperty('voice', voices[0].id)
 rate = engine.getProperty('rate')
 volume = engine.getProperty('volume')
-print(rate)
-print(volume)
-
+dictionary=PyDictionary()
 newVoiceRate = 1000
 while newVoiceRate <= 300:
     engine.setProperty('rate',newVoiceRate)
     engine.runAndWait()
     newVoiceRate = newVoiceRate+50
 engine.setProperty('rate', 200)
-
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+username = "moderngaming2588@gmail.com"
+password = "Lohith01"
+imap = imaplib.IMAP4_SSL("imap.gmail.com")
+# authenticate
+imap.login(username, password)
+status, messages = imap.select("INBOX")
+# number of top emails to fetch
+N = 4
+# total number of emails
+messages = int(messages[0])
 newVolume = 100
 engine.setProperty('volume',newVolume)
 engine.runAndWait()
 newVolume = newVolume+100
 engine.setProperty('volume',100)   
-
 client = wolframalpha.Client('GTAT38-RTR7PG4P53')
-
-
 print("Initializing Jarvis")
 MASTER = "Lohith S"
-
-
 news_url = "https://news.google.com/news/rss"
 Client = urlopen(news_url)
 xml_page = Client.read()
 Client.close()
-
 soup_page = soup(xml_page, "xml")
 news_list=soup_page.findAll("item")
-
-
 owm = pyowm.OWM('f3852ccaeb3a2b265ccc22185e27367d')
-
-
 city = 'Bengaluru'
 loc = owm.weather_at_place(city)
 weather = loc.get_weather()
@@ -77,11 +88,15 @@ weather = loc.get_weather()
 temperature = weather.get_temperature(unit='celsius')
 humidity = weather.get_humidity()
 wind = weather.get_wind()
+#store = {}
+#logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+#client = WebOSClient.discover()[0]
+#client.connect()
+#print(client)
 
 def speak(audio):
     engine.say(audio)
     engine.runAndWait()
-
 
 def wishMe():
     hour = int(datetime.datetime.now().hour)
@@ -94,38 +109,50 @@ def wishMe():
     else:
         speak("Good Evening Sir...!")   
 
-
 def takeCommand():
     #It takes microphone input from the user and returns string output
-
     r = sr.Recognizer()
     with sr.Microphone() as source:
         playsound("C:\\Users\\Dell\\AppData\\Roaming\\LINKS\\Customization\\Sound Effects\\System_ready.wav")
         print("Listening...")
         r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source)
         audio = r.listen(source)
-
     try:
         print("Searching...")    
-        query = r.recognize_google(audio, language='en-US')
+        query = r.recognize_google(audio, language='en-IN')
         print(f"User said: {query}\n")
-
     except Exception as e:
         # print(e)    
-        print("Say that again please...")  
-        speak('Sorry sir,  i Didn\'t get that')
         return "None"
-    return query
-speak("Hello Boss..")    
+    return query 
 
+def pauseListen():
+    #It takes microphone input from the user and returns string output
+
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source)
+        audio = r.listen(source)
+    try:
+        print("Searching...")    
+        query = r.recognize_google(audio, language='en-IN')
+        print(f"User said: {query}\n")
+    except Exception as e:
+        # print(e)    
+        return "None"
+    return query 
+
+   
 def sendEmail(to, content):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo()
     server.starttls()
     server.login('moderngaming2588@gmail.com', 'Lohith01')
     server.sendmail('moderngaming2588@gmail.com', to, content)
-    server.close()
-
+    server.close()   
 
 if __name__ == "__main__":
     wishMe()
@@ -142,7 +169,44 @@ if __name__ == "__main__":
             print(results)
             speak(results)
 
-        elif 'will it rain' in query.lower():
+        elif 'pause' in query.lower() or 'hold' in query.lower():
+            speak("Okay sir..Listening Paused!!")
+            speak("Switching to Auxillary Listening Mode")
+            listen = False
+            while listen == False:
+                que = pauseListen()
+                if 'jarvis' in que.lower() or 'Jarvis' in que.lower() or 'start' in que.lower():
+                    speak("Listening Enabled")
+                    listen = True
+                    break           
+                else:
+                    time.sleep(1) 
+
+        elif 'zoom' in query.lower() and 'mode' in query.lower():
+            speak("Initiating Jarvis Zoom version 1.0!!")
+            listen = False
+            while listen == False:
+                que = pauseListen()
+                if 'mute' in que.lower() or 'unmute' in que.lower() and 'audio' in que.lower() or 'voice'in que.lower():
+                    pyautogui.keyDown('alt');pyautogui.keyDown('a');pyautogui.keyUp('alt');pyautogui.keyUp('a')
+                elif 'start' in que.lower() or 'stop' in que.lower() or 'video' in que.lower() or 'visual' in que.lower():
+                    pyautogui.keyDown('alt');pyautogui.keyDown('v');pyautogui.keyUp('alt');pyautogui.keyUp('v')
+                elif 'raise' in que.lower() and 'hand' in que.lower():
+                    pyautogui.keyDown('alt');pyautogui.keyDown('y');pyautogui.keyUp('alt');pyautogui.keyUp('y')
+                elif 'leave' in que.lower() or 'quit' in que.lower() or 'exit'in que.lower() or 'end' in que.lower() and 'meeting' in que.lower():
+                    pyautogui.keyDown('alt');pyautogui.keyDown('q');pyautogui.keyUp('alt');pyautogui.keyUp('q')
+                    time.sleep(3)
+                    pyautogui.press('enter',interval=0.1)
+                elif 'start' in que.lower() or 'stop' in que.lower() and 'screen' in que.lower():
+                    pyautogui.keyDown('alt');pyautogui.keyDown('s');pyautogui.keyUp('alt');pyautogui.keyUp('s')
+                elif 'jarvis' in que.lower() and 'deactivate' in que.lower() or 'end' in que.lower() or 'kill' in que.lower():
+                    speak("Deactivating Jarvis Zoom version 1.0")
+                    listen = True
+                    break   
+                else:
+                    time.sleep(1)            
+
+        elif 'will it rain' in query.lower() or 'umbrella' in query.lower() or 'raincoat' in query.lower():
             loc = owm.three_hours_forecast(city)
             clouds = str(loc.will_have_clouds())
             rain = str(loc.will_have_rain())  
@@ -164,21 +228,29 @@ if __name__ == "__main__":
                 print("Moreover sir it is very cloudy today")
                 speak("Moreover sir it is very cloudy today")
               
-
             elif clouds == 'True' and rain == 'False':
                 print("But sir even though it won\'t rain today....It is very cloudy outside")
-                speak("But sir even though it won\'t rain today....It is very cloudy outside")   
+                speak("But sir even though it won\'t rain today....It is very cloudy outside")    
 
-        elif 'dictionary mode' in query.lower() or 'meaning' in query.lower():
-            speak("Okay sir..tell me what are you looking for") 
-            query = takeCommand()
-            dictionary = PyDictionary()
-            print(dictionary.meaning(query)) 
-            speak(dictionary.meaning(query))   
+        elif 'dice' in query.lower():
+            playsound()
+            sm = ['One','Two','Three','Four','Five','Six']
+            spf = random.choice(sm)
+            speak(f"The Dice is rolled and it is {spf}")
 
+        elif 'where are we' in query.lower() or 'locate' in query.lower() or 'geolocation' in query.lower():
+            g = geocoder.ip('me')
+            geoloc = g.latlng
+            speak(f"Our current Latitudes and Longitudes are {geoloc}!!") 
+            speak("Location match successful!!")
+            geocity = g.city
+            speak(f"Sir..we are in {geocity}!!")                
+
+        elif 'trust' in query.lower() or 'believe' in query.lower():
+            speak("I trust you sir..kind of like Trust the Force..Luke")
 
         elif 'hello' in query.lower() or 'hi' in query.lower() or 'howdy' in query.lower():
-            wish = ['Hello sir,,Nice to see you','Hello there Boss,,Nice to see you','Hola Sir, nice to see you','Howdy,,sir..It\'s nice to see you']
+            wish = ['Hello sir,,it\'s so good to see you','Hello there Boss,,it\'s so good to see you','Howdy,,sir..it\'s so good to see you']
             speak(random.choice(wish))    
 
         elif 'sunset time' in query.lower() or 'sunrise time' in query.lower() or'what time will the sunset' in query.lower() or 'what time will the sunrise' in query.lower():
@@ -189,36 +261,344 @@ if __name__ == "__main__":
             speak(f"Sunrise time is {sr}")
             speak(f"Sunset time is {ss}")   
 
+        elif 'applause' in query.lower() or 'clap' in query.lower() or 'clapping' in query.lower():
+            playsound("C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//clapping.mpeg")
+
+        elif 'upcoming matches' in query.lower():
+            y = cb.gmatchlist()
+            for x in y:
+                print(x)
+
+        elif 'live score' in query.lower():
+            p = cb.plivescore(2)
+            print(p) 
+
+        elif 'tv' in query.lower():
+            for status in client.register(store):
+                if status == WebOSClient.PROMPTED:
+                    print("Please accept to connect to the TV!!")
+                elif status == WebOSClient.REGISTERED:
+                    print("Registration Successful!!")
+            g = input("Enter input: ")
+            if g == 'youtube' or 'Youtube': 
+                app = ApplicationControl(client)
+                apps = app.list_apps()
+                yt = [x for x in apps if "youtube" in x["title"].lower()][0]
+                launch_info = app.launch(yt)
+                print("Opening Youtube")
+    
+            if g == 'prime video' or 'amazon': 
+                app = ApplicationControl(client)
+                apps = app.list_apps()
+                am = [x for x in apps if "amazon" in x["title"].lower()][0]
+                launch_info = app.launch(am)
+                print("Opening Amazon Prime Video")
+
+            if g == 'off':
+                system = SystemControl(client)
+                system.notify("Turning off your TV")
+                system.power_off()
+                print("Turning off your TV")
+
+            if g == 'mute':
+                inp = InputControl(client)
+                inp.connect_input()
+                inp.mute()
+                    
+        elif 'shut down' in query.lower():
+            speak("Okay sir..turning off your laptop")
+            os.system('shutdown -s')    
+
         elif 'google search' in query.lower():
             new = 2
             tabUrl = "https://google.com/?#q="
             term = takeCommand()
             webbrowser.open(tabUrl+term,new=new)
 
-        elif 'face recognition' in query.lower():
-            speak("Turning on Biometric Face Recoginition Mode")    
-            os.startfile("C:\\Users\\Dell\\Desktop\\my python projects\\face of lohith.py") 
+        elif 'youtube' in query.lower() or 'Youtube' in query.lower() and 'tv' in query.lower():
+            store = {}
+            speak("Jarvis LG AI Connect Mode..Turned On!!")
+            time.sleep(2)
+            speak("Well..what would you like to watch sir")
+            query = takeCommand()
+            speak("Excellent choice Boss!!")
+            text = query
+            yt = yt_search.build("AIzaSyCtWMxKG8NA3LGEa5YALIURupE_lAIPa_4")
+            search_result = yt.search(text, sMax=1, sType=["video"])
+            ytname = search_result.title
+            ytchnl = search_result.channelTitle
+            ytid = search_result.videoId
+            speak(f"Playing {ytname} by {ytchnl} on LG WebOS TV")
+            def listToString(s):  
+                str1 = " " 
+                return (str1.join(s)) 
+            s = ytid
+            ytid = listToString(s) 
+            store = {}
+            client = WebOSClient('192.168.0.101')
+            #client = WebOSClient.discover()[0]
+            #client.register(store=store)
+            client.connect()
+            for status in client.register(store):
+                print(status)
+                print("Please accept the connect on the TV!")    
+#media.mute()
+            app = ApplicationControl(client)
+            apps = app.list_apps()
+            yt = [x for x in apps if "youtube" in x["title"].lower()][0]
+            launch_info = app.launch(yt,content_id = ytid)
+#client.launch_app('amazon')
+            for app in client.get_apps():
+                print(app)            
 
-        elif 'quote of the day' in query.lower() or 'quote' in query.lower():
-            res=requests.get("https://www.brainyquote.com/quote_of_the_day")
-            soup=BeautifulSoup(res.text,'lxml')
-            image_quote = soup.find('img', {'class':'p-qotd'})
-            print(image_quote['alt'])    
-            speak(image_quote['alt'])  
+
+        elif 'screen recorder' in query.lower():
+            speak("Opening DU Screen Recorder")
+            codePath = "C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\DU Recorder.lnk"
+            os.startfile(codePath)
+      
+        elif 'i am back' in query.lower() or 'i\'m back' in query.lower() or 'home' in query.lower():
+            speak("Welcome Back..sir..")        
+
+        elif 'face recognition' in query.lower():
+            speak("Turning on Biometric Face Recognition Mode")    
+            os.startfile("C:\\Users\\Dell\\Desktop\\my python projects\\face of lohith.py") 
 
         elif 'play MJ' in query.lower() or 'michael jackson' in query.lower() or 'they don\'t care about us' in query.lower():
             playsound("C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\Michael Jackson-They Don t Care About Us.mp3")
         
         elif 'boney' in query.lower() or 'rasputin' in query.lower():
             playsound("C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\Boney M - Rasputin.mp3")
+        
+        elif 'read email' in query.lower() or 'read my emails' in query.lower() or 'read emails' in query.lower() or 'read my email' in query.lower():
+            messages = int(messages)
+            print(f"Sir,,you have {messages} emails in your Inbox")
+            print(f"Here are some important emails")
+            speak(f"Sir,,you have {messages} emails in your Inbox")
+            speak(f"Here are some important emails")
+            for i in range(messages, messages-N, -1):
+    # fetch the email message by ID
+                res, msg = imap.fetch(str(i), "(RFC822)")
+            for response in msg:
+                if isinstance(response, tuple):
+            # parse a bytes email into a message object
+                    msg = email.message_from_bytes(response[1])
+            # decode the email subject
+                    subject = decode_header(msg["Subject"])[0][0]
+                    if isinstance(subject, bytes):
+                # if it's a bytes, decode to str
+                        subject = subject.decode()
+            # email sender
+                    from_ = msg.get("From")
+                    print("Subject:", subject)
+                    print("From:", from_)
+            # if the email message is multipart
+                    if msg.is_multipart():
+                # iterate over email parts
+                        for part in msg.walk():
+                    # extract content type of email
+                            content_type = part.get_content_type()
+                            content_disposition = str(part.get("Content-Disposition"))
+                            try:
+                        # get the email body
+                                body = part.get_payload(decode=True).decode()
+                            except:
+                                pass
+                            if content_type == "text/plain" and "attachment" not in content_disposition:
+                        # print text/plain emails and skip attachments
+                                print(body)
 
-        elif 'music' in query.lower() or 'songs' in query.lower():
+                    else:
+                # extract content type of email
+                        content_type = msg.get_content_type()
+                # get the email body
+                        body = msg.get_payload(decode=True).decode()
+                        if content_type == "text/plain":
+                    # print only text email parts
+                            print(body)
+                    if content_type == "text/html":
+                # if it's HTML, create a new HTML file and open it in browser
+                # write the file
+                # open in the default browser
+                        print("="*100)
+            imap.close()
+            imap.logout() 
+
+        elif 'snipping tool' in query.lower():
+            codePath = "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\Snipping Tool.lnk" 
+            os.startfile(codePath)  
+
+        elif 'mute' in query.lower() or 'volume of' in query.lower():
+            speak("Muting your speakers")
+            pyautogui.keyDown('volumemute');pyautogui.keyUp('volumemute')
+
+        elif 'volume on' in query.lower():
+            speak("Unmuting your speakers")
+            pyautogui.keyDown('volumemute');pyautogui.keyUp('volumemute')                
+
+        elif 'can\'t hear you' in query.lower() or 'increase volume' in query.lower() or 'volume up' in query.lower():
+            speak("Increasing Sound Volume")
+            pyautogui.keyDown('volumeup');pyautogui.keyUp('volumeup')
+            speak("Can you hear me now..sir") 
+            query = takeCommand()
+            if 'yes' in query.lower() or 'yep' in query.lower() or 'yeah' in query.lower() or 'yup' in query.lower():
+                speak("Okay then...")         
+
+        elif 'did it work' in query.lower():
+            speak("Oh...I think it worked pretty great sir..")
+
+        elif 'good morning' in query.lower():
+            speak("Good Morning..sir")
+
+        elif 'good evening' in query.lower():
+            speak("Good Evening..sir")
+
+        elif 'good afternoon' in query.lower():
+            speak("Good afternoon..sir")
+
+        elif 'good night' in query.lower():
+            speak("Good Night..sir..Sweet Dreams..")
+
+        elif 'spell' in query.lower():
+            quer = query.replace("spell"," ")
+            def split(quer):
+                return list(quer)
+            word = quer
+            print(split(quer))
+            speak(split(quer))
+        elif 'pronounce' in query.lower():
+            quo = query.replace("pronounce"," ")
+            print(quo)
+            speak(quo)           
+
+        elif 'screenshot' in query.lower():
+            image = pyautogui.screenshot()
+            image = cv2.cvtColor(np.array(image),cv2.COLOR_RGB2BGR)
+            speak("What should I save it..sir")
+            query=takeCommand()
+            scrshot = query
+            cv2.imwrite(scrshot+".png", image)   
+            speak("Image saved as {scrshot}.png")
+
+        elif 'list ' in query.lower():
+            speak("Creating a list")
+            query = takeCommand()
+            l1 = query
+            speak(f"{l1} added to the list")
+            speak("What\'s the next item sir..") 
+            query = takeCommand()               
+            l2 = query
+            speak(f"{l2} added to the list")
+            speak("What\'s the next item sir..") 
+            query = takeCommand()
+            l3 = query
+            speak(f"{l3} added to the list")
+            speak("What\'s the next item sir..")             
+            query = takeCommand()
+            l4 = query
+            speak(f"{l4} added to the list")
+            speak("What\'s the next item sir..")  
+            query = takeCommand()
+            l5 = query
+            speak(f"{l5} added to the list")
+            speak("What\'s the next item sir..")
+            query = takeCommand()
+            l6 = query
+            speak(f"{l6} added to the list")
+            speak("What\'s the next item sir..") 
+            query = takeCommand()
+            l7 = query
+            speak(f"{l7} added to the list")
+            speak("What\'s the next item sir..")
+            query = takeCommand()
+            l8 = query
+            speak(f"{l8} added to the list")
+            speak("What\'s the next item sir..")
+            query = takeCommand()
+            l9 = query
+            speak(f"{l9} added to the list")
+            speak("What\'s the next item sir..")                                   
+            query = takeCommand()
+            l10 = query
+            speak(f"{l10} added to the list")
+            speak("What\'s the next item sir..")
+
+        elif 'read' in query.lower():
+            speak(f"Number 1..in the list..{l1}")
+            speak(f"Number 2..in the list..{l2}")
+            speak(f"Number 3..in the list..{l3}")
+            speak(f"Number 4..in the list..{l4}")
+            speak(f"Number 5..in the list..{l5}")
+            speak(f"Number 6..in the list..{l6}")
+            speak(f"Number 7..in the list..{l7}")
+            speak(f"Number 8..in the list..{l8}")
+            speak(f"Number 9..in the list..{l9}")
+            speak(f"Number 10..in the list..{l10}")
+
+        elif 'horoscope' in query.lower():
+            speak("Sir..please tell me the zodiac sign..")
+            query = takeCommand()
+            speak("What do you want to look for..lucky number..or..lucky day..or..lucky colour..or..description..or..mood")
+            quer = takeCommand()
+            if 'number' in quer.lower():
+                kor = query
+                horoscope = pyaztro.Aztro(sign=kor)
+                print(horoscope.lucky_number)
+                speak(horoscope.lucky_number)
+            elif 'colour' in quer.lower():
+                kor = query
+                horoscope = pyaztro.Aztro(sign=kor)
+                print(horoscope.color)  
+                speak(horoscope.color)
+            elif 'about' in quer.lower() or 'description' in quer.lower():
+                kor = query
+                horoscope = pyaztro.Aztro(sign=kor)
+                print(horoscope.description) 
+                speak(horoscope.description) 
+
+            elif 'mood' in quer.lower():
+                kor = query
+                horoscope = pyaztro.Aztro(sign=kor)
+                print(horoscope.mood)
+                speak(horoscope.mood)
+            elif 'day' in quer.lower():
+                kor = query
+                horoscope = pyaztro.Aztro(sign=kor)
+                print(horoscope.day)
+                speak(horoscope.day)
+            elif 'date' in quer.lower() or 'month' in quer.lower() or 'period' in quer.lower():
+                kor = query
+                horoscope = pyaztro.Aztro(sign=kor)
+                print(horoscope.date_range) 
+                speak(horoscope.date_range) 
+
+
+        elif 'wizard' in query.lower():
+            speak("Initiating Wizarding World Mode..")
+            speak("Please introduce yourself..")
+            query=takeCommand()
+            query = query.replace('i am'," ")
+            name = query
+            speak(f"Hello {name}..Welcome to Hogwarts..")
+            #playsound() #Voldemort lightning
+            #playsound()  #we do not speak of him 
+            #playsound()#we finally meet
+            #playsound()#wands at the ready
+            query = takeCommand()
+            if 'expelliarmus' in query.lower():
+                expell = ["C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//Wingardium Leviosa.mpeg","C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//Incarne.mpeg"]
+                playsound("C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//Wingardium Leviosa.mpeg")
+                playsound(random.choice(expell))
+
+
+        elif 'music' in query.lower() or 'songs' in query.lower() or 'drop' in query.lower():
             speak("What would you like to listen to sir")
             query = takeCommand()
             if 'boney' in query.lower() or 'rasputin' in query.lower():
                 playsound("C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\Boney M - Rasputin.mp3")
-            elif 'play MJ' in query.lower() or 'michael jackson' in query.lower() or 'they don\'t care about us' in query.lower():
+            elif 'MJ' in query.lower() or 'michael jackson' in query.lower() or 'they don\'t care about us' in query.lower():
                 playsound("C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\Michael Jackson-They Don t Care About Us.mp3")
+
             elif 'hedwig' in query.lower() or 'harry potter' in query.lower():
                 playsound("C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//Hedwig s Theme.mp3")
 
@@ -235,7 +615,7 @@ if __name__ == "__main__":
             elif 'shape of you' in query.lower():
                 playsound('C:\\Users\\Dell\\Music\\Shape of you.mp3')
 
-            elif 'play on my way' in query.lower() or 'play i\'m on my way' in query.lower():
+            elif 'on my way' in query.lower() or ' i\'m on my way' in query.lower():
                 playsound("C:\\Users\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\Alan Walker, Sabrina Carpenter & Farruko - On My Way (1) - Copy.mp3")
 
             elif 'something that iron man' in query.lower() or 'iron man songs' in query.lower() or 'something that tony stark' in query.lower():
@@ -244,9 +624,6 @@ if __name__ == "__main__":
             elif 'cheap thrills' in query.lower():
                 playsound("C:\\Users\\Dell\\Music\\Sia - Cheap Thrills (DawnFoxes.com).mp3")     
                
-
-               
-            
         elif 'what can you do' in query.lower():
             speak("I can assist you in the following jobs,,sir")
             speak("I can search things on Google")
@@ -259,17 +636,26 @@ if __name__ == "__main__":
             speak("I can send E mails")
             speak("I can play songs")
             speak("I can even make you laugh sir")
-            speak("I can tell you the quote of the day sir")
             speak("I can also recognize several faces sir")
+            speak("I can spell words for you..")
+            speak("I can tell you horoscopes..")
+            speak("I can control your TV too...sir")
             speak("Well that\'s all I can do right now sir,,")
-            
 
-        elif 'that\'s inspiring' in query.lower() or 'inspired me'in query.lower():
-            speak("I am happy that I could you sir..")
-
-        elif 'help' in query.lower():
-            speak("Tell me sir..how may I help you")
-
+        elif 'geography'in query.lower() or 'distance' in query.lower() and 'matrix' in query.lower():
+            query = takeCommand()
+            speak("What is the name of the place of which you want to measure the distance!!")
+            cityloco = query
+            g = geocoder.location(cityloco)
+            l = geocoder.ip('me')
+            liveloco = l.latlng
+            nonliveloco = g.latlng
+            diff = (geodesic(liveloco,nonliveloco).km)
+            milediff = (geodesic(liveloco,nonliveloco).miles)
+            mldiff = round(milediff,1)
+            newdiff = round(diff,1)
+            speak(f"Sir..the difference between {cityloco} from our location is nearly {newdiff} kilometres or {mldiff} miles far away")
+        
         elif 't rex' in query.lower() or 'T Rex' in query.lower() or 't-rex' in query.lower() or 't-rex sound' in query.lower():
             playsound("C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//t-rex-roar (1).mp3")
 
@@ -284,6 +670,15 @@ if __name__ == "__main__":
 
         elif  'rooster sound' in query.lower() or 'rooster' in query.lower():
             playsound("C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//Rudy_rooster_crowing-Shelley-1948282641.mp3")
+
+        elif 'meaning' in query.lower():
+            speak("Okay sir..tell me the word for which you require the meaning")
+            query = takeCommand()
+            print (dictionary.meaning(query))
+            speak (dictionary.meaning(query))
+
+        elif  'wake up' in query.lower():
+            speak("I am indeed awake sir")
 
         elif 'dog howling' in query.lower() or 'dog howl' in query.lower():
             playsound("C://Users//Dell//Desktop//J.A.R.V.I.S (v2.0)//Dog Howling At Moon-SoundBible.com-1369876823.mp3")    
@@ -309,7 +704,7 @@ if __name__ == "__main__":
             print(f)
             speak(f) 
 
-        elif 'search' in query.lower():
+        elif 'calculate' in query.lower():
             query = query.lower()
             res = client.query(query)
             speak("Searching for Results!!")
@@ -318,17 +713,148 @@ if __name__ == "__main__":
             print(results)
             speak(results)  
 
-        elif 'open zoom' in query.lower() or 'open Zoom' in query.lower():
-            speak("Okay sir,,opening Zoom Cloud Meetings on Windows")
-            codePath = "C://Users//Dell//Desktop//Zoom.lnk" 
-            os.startfile(codePath)
-            speak("Do you have an online class,,sir")
-            query=takeCommand()
-            if 'yes' in query.lower() or 'yep' in query.lower() or 'yeah' in query.lower() or 'yup' in query.lower():
-                speak("Good Luck,,with your online class..sir")
-            elif 'no' in query.lower() or 'nope' in query.lower() or 'nah' in query.lower() or 'naah' in query.lower():
-                speak("Well,,Good luck with that sir")
+        elif 'find my phone' in query.lower():
+            speak("Phone Locater Mode Turned On..Sir!!")
+            speak("Searching for your phone!!")
+            account_sid = 'AC56c485a3d96c35c6b7710270f2f0660f'
+            auth_token = '09099db01cb770a3d4847cb2a2581c6c'
+            client = TwilioRestClient(account_sid, auth_token)
+            call = client.calls.create(
+                        #twiml='<Response><Say>Ahoy, World!</Say></Response>',
+                        to='+918073110857',
+                        from_='+12513571461',
+                        url="http://static.fullstackpython.com/phone-calls-python.xml", method="GET")
 
+
+        elif 'join'in query.lower():
+            speak("Opening Zoom Cloud Meetings")
+            speak("Sir..do you want to join a meeting or start your own meeting!!")
+            zoomPath = "C://Users//Dell//Desktop//Zoom.lnk"
+            os.startfile(zoomPath)
+            query = pauseListen()
+            if 'join' in query.lower() or 'connect' in query.lower():
+                speak("Joining the Meeting!!")
+                meet_id = '617 201 8131'
+                image = "C://Users//Dell//Desktop//JoinButton.PNG"
+                x,y = pyautogui.locateCenterOnScreen(image,confidence =0.9)
+                print(x,y)
+                pyautogui.moveTo(x,y)
+                pyautogui.click(x,y)
+                pyautogui.click(button='left',clicks=1,interval=0.25)
+                #pyautogui.press('enter',interval=1)
+                pyautogui.write(meet_id)
+                password = "LeoStark"
+                pyautogui.press('enter',interval=1)
+                time.sleep(2)
+                pyautogui.write(password)
+                pyautogui.press('enter',interval=1)
+                speak("Do you have an Online Class..sir")
+                query = takeCommand()
+                if 'yes' in query.lower() or 'yep' in query.lower() or 'yeah' in query.lower() or 'yup' in query.lower():
+                    speak("Good Luck,,with your online class..sir")
+                else:
+                    speak("Well,,Good luck with that sir")
+                    break 
+            elif 'start meeting' in query.lower() or 'start' in query.lower():
+                speak("Creating a new meeting!!")
+                image = "C://Users//Dell//Desktop//ScheduleMeet.PNG"
+                time.sleep(4)
+                x,y = pyautogui.locateCenterOnScreen(image,confidence =0.9)
+                print(x,y)
+                pyautogui.moveTo(x,y)
+                pyautogui.click(x,y)
+                pyautogui.click(button='left',clicks=1,interval=0.25)
+                time.sleep(4)
+                pyautogui.hotkey('alt','f')
+
+        elif 'set course for' in query.lower() or 'set cost for' in query.lower():
+            destination = query.replace('set course for ',' ') or query.replace('set cost for ',' ') 
+            playsound('C://Users//Dell//Desktop//Maps  Automation Pics//Maps Star Trek Voice Automated//Aye Sir.mpeg')#Aye Sir
+            time.sleep(1)
+            speak(f"Captain!!Setting Navigational Course for {destination}!!")
+            playsound('C://Users//Dell//Desktop//Maps  Automation Pics//Maps Star Trek Voice Automated//Computer Click.mpeg')#Computer click
+            pyautogui.press('esc',interval=0.1)
+            pyautogui.press('win',interval=0.1)
+            pyautogui.write('maps')
+            time.sleep(1)
+            pyautogui.press('enter',interval=1)
+            time.sleep(3)
+            directions= 'C://Users//Dell//Desktop//Maps  Automation Pics//Directions.PNG'
+            xy = pyautogui.locateOnScreen(directions,confidence =0.9)
+            pyautogui.moveTo(xy)
+            pyautogui.click(xy)
+            pyautogui.click(button='left',clicks=2,interval=0.25)    
+            time.sleep(2)
+            location = 'C://Users//Dell//Desktop//location.png'
+            pq = pyautogui.locateOnScreen(location,confidence =0.9)
+            pyautogui.moveTo(pq)
+            pyautogui.click(pq)
+            pyautogui.click(button='left',clicks=1,interval=0.25) 
+            destiny = 'C://Users//Dell//Desktop//Maps  Automation Pics//DestinationPoint.PNG'
+            cd = pyautogui.locateOnScreen(destiny,confidence =0.9)
+            pyautogui.moveTo(cd)
+            pyautogui.click(cd)
+            pyautogui.click(button='left',clicks=1,interval=0.25) 
+            pyautogui.write(destination)
+            time.sleep(1)
+            pyautogui.press('enter',interval=1)
+            director = 'C://Users//Dell//Desktop//Maps  Automation Pics//GetDirections.PNG'
+            ab = pyautogui.locateOnScreen(director,confidence =0.9)
+            pyautogui.moveTo(ab)
+            pyautogui.click(ab)
+            pyautogui.click(button='left',clicks=1,interval=0.25)
+            time.sleep(1)
+            speak(f"Captain..Navigational Course Set for {destination}") 
+            quo = pauseListen()
+            if 'engage' in quo.lower() or 'fire' in quo.lower() or 'out' in quo.lower() or 'warp' in quo.lower() or 'wrap' in quo.lower():
+                playsound('C://Users//Dell//Desktop//Maps  Automation Pics//Maps Star Trek Voice Automated//Aye Sir.mpeg')#aye captain
+                speak("!!Warp Speed..Captain!!")
+                time.sleep(0.25)
+                speak("!!Bon Voyage!!")
+                playsound('C://Users//Dell//Desktop//Maps  Automation Pics//Maps Star Trek Voice Automated//Warp Drive.mpeg')#warp drive
+            else:
+                time.sleep(1)
+
+        elif 'who' in query.lower() or 'why' in query.lower() and 'here' in query.lower() or 'place' in query.lower():
+            speak(f"Sir..I clearly remember you telling me to set course for {destination}!!")
+            speak(f"So..I set a course for {destination}!!")
+
+
+        elif 'video call' in query.lower() or 'call' in query.lower():
+            contact = 'Reshma Jio'
+            os.startfile('C://Users//Dell//Desktop//Google Duo.lnk')
+            time.sleep(6)
+            searchbar = 'C://Users//Dell//Desktop//Maps  Automation Pics//Google Duo Automation//Search Bar.PNG'
+            vd = pyautogui.locateOnScreen(searchbar,confidence =0.9)
+            pyautogui.moveTo(vd)
+            pyautogui.click(vd)
+            pyautogui.click(button='left',clicks=1,interval=0.25)
+            pyautogui.write(contact)
+            pyautogui.press('enter',interval=0.25)  
+            videocall =  'C://Users//Dell//Desktop//Maps  Automation Pics//Google Duo Automation//Video Call.PNG'         
+            vc = pyautogui.locateOnScreen(videocall,confidence =0.9)
+            pyautogui.moveTo(vc)
+            pyautogui.click(vc)
+            pyautogui.click(button='left',clicks=1,interval=0.25)
+
+        elif 'voice call' in query.lower():
+            query = query.replace('voice call',' ')
+            if 'mom' in query.lower() or 'mum' in query.lower():
+                contact = 'Reshma Jio'
+                os.startfile('C://Users//Dell//Desktop//Google Duo.lnk')
+                time.sleep(5)
+                searchbar = 'C://Users//Dell//Desktop//Maps  Automation Pics//Google Duo Automation//Search Bar.PNG'
+                vd = pyautogui.locateOnScreen(searchbar,confidence =0.9)
+                pyautogui.moveTo(vd)
+                pyautogui.click(vd)
+                pyautogui.click(button='left',clicks=1,interval=0.25)
+                pyautogui.write(contact)
+                pyautogui.press('enter',interval=0.25)  
+                voicecall =  'C://Users//Dell//Desktop//Maps  Automation Pics//Google Duo Automation//Voice Call.PNG'         
+                vl = pyautogui.locateOnScreen(voicecall,confidence =0.9)
+                pyautogui.moveTo(vl)
+                pyautogui.click(vl)
+                pyautogui.click(button='left',clicks=1,interval=0.25)
 
         elif 'Jarvy' in query.lower() or 'jarvy' in query.lower():
             speak("Yes..sir..")        
@@ -355,10 +881,30 @@ if __name__ == "__main__":
         elif 'you there' in query.lower():
             speak("Yes..sir,,for you,,always")
 
+        elif 'sleep' in query.lower():
+            os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
 
-        elif 'play youtube videos' in query.lower() or 'play Youtube videos' in query.lower():
+        elif 'youtube videos' in query.lower() or 'Youtube videos' in query.lower() or 'Youtube' in query.lower() or 'youtube' in query.lower():
+            speak("Well..what would you like to watch sir")
             query = takeCommand()
-            webbrowser.open("https://www.youtube.com/results?search_query="+query)
+            speak("Excellent choice Boss!!")
+            text = query
+            yt = yt_search.build("AIzaSyCtWMxKG8NA3LGEa5YALIURupE_lAIPa_4")
+            search_result = yt.search(text, sMax=1, sType=["video"])
+            ytname = search_result.title
+            ytchnl = search_result.channelTitle
+            ytid = search_result.videoId
+            def listToString(s):  
+                str1 = " " 
+                return (str1.join(s)) 
+            s = ytid
+            ytid = listToString(s)            
+            #ytid = [i.replace("[", "") for i in ytid] #and [item.replace("]", "") for item in ytid]
+            speak(f"Playing {ytname} by {ytchnl}")
+            #print(s)
+            ytlink = "http://www.youtube.com/watch?v="
+            webbrowser.open(ytlink+ytid)
+
 
         elif 'images' in query.lower() or 'image' in query.lower() or 'image recognition protocol' in query.lower():
             speak("Initiating..Image Recognition Protocol..")
@@ -386,20 +932,100 @@ if __name__ == "__main__":
             speak("Okay sir,,opening Google Translate")
             webbrowser.open("https://translate.google.com/")
 
-        elif 'the date' in query.lower() or 'today\'s date' in query.lower():
+        elif 'date' in query.lower() or 'today\'s date' in query.lower():
             strTime = datetime.datetime.now().strftime(" Today\'s date is %d %m %y20")
             print(strTime)
             speak(strTime)
 
         elif 'alarm' in query.lower():
-            speak("Okay sir,,alarm ")
-            stop = True
-            while stop == True:
+            query = query.replace('alarm','')
+            speak(f"Setting an alarm for {query} ")
+            stop = False
+            while stop == False:
                 rn = str(datetime.datetime.now().time())
                 print(rn)
-                if rn >= "12:07:00.000000":
-                    playsound("C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\jarvis_alarm.mp3")
-     
+                if '1 am' in query.lower() and  rn >= "01:00:00.000000":
+                    stop = True
+                    speak("Sir..its 1 am")    
+                elif '2 am' in query.lower() and  rn >= "02:00:00.000000":
+                    stop = True
+                    speak("Sir..its 2 am")                      
+                elif '3 am' in query.lower() and  rn >= "03:00:00.000000":
+                    stop = True
+                    speak("Sir..its 3 am")
+                elif '4 am' in query.lower() and  rn >= "04:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 4 am")
+                elif '5 am' in query.lower() and rn >= "05:00:00.000000":
+                    stop = True
+                    speak("Sir..its 5 am")
+                elif '6 am' in query.lower() and rn >= "06:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 6 am") 
+                elif '7 am' in query.lower() and rn >= "07:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 7 am")
+                elif '8 am' in query.lower() and rn >= "08:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 8 am")
+                elif '9 am' in query.lower() and rn >= "09:00:00.000000":                    
+                    stop = True
+                    speak("Sir..its 9 am")                        
+                elif '10 am' in query.lower() and rn >= "10:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 10 am")
+                elif '11 am' in query.lower() and rn >= "11:00:00.000000":                    
+                    stop = True
+                    speak("Sir..its 11 am")
+                elif '12 am' in query.lower() and rn >= "00:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 12 am")                        
+                elif '12 pm' in query.lower() and rn >= "12:00:00.000000":                 
+                    stop = True
+                    speak("Sir..its 12 pm")
+                elif '1 pm' in query.lower() and rn >= "13:00:00.000000":                    
+                    stop = True
+                    speak("Sir..its 1 pm")
+                elif '2 pm' in query.lower() and rn >= "14:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 2 pm")                                    
+                elif '3 pm' in query.lower() and rn >= "15:00:00.000000":                  
+                    stop = True
+                    speak("Sir..its 3 pm")
+                elif '4 pm' in query.lower() and rn >= "16:00:00.000000":                  
+                    stop = True
+                    speak("Sir..its 4 pm")
+                elif '5 pm' in query.lower() and rn >= "17:00:00.000000":                    
+                    stop = True
+                    speak("Sir..its 5 pm")                        
+                elif '6 pm' in query.lower() and rn >= "18:00:00.000000":                    
+                    stop = True
+                    speak("Sir..its 6 pm")
+                elif '7 pm' in query.lower() and rn >= "19:00:00.000000":                  
+                    stop = True
+                    speak("Sir..its 7 pm")
+                elif '8 pm' in query.lower() and rn >= "20:00:00.000000":                  
+                    stop = True
+                    speak("Sir..its 8 pm")  
+                elif '9 pm' in query.lower() and rn >= "21:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 9 pm")                                              
+                elif '10 pm' in query.lower() and rn >= "22:00:00.000000":                   
+                    stop = True
+                    speak("Sir..its 10 pm")
+                elif '11 pm' in query.lower() and rn >= "23:00:00.000000":                    
+                    stop = True
+                    speak("Sir..its 11 pm")
+                else:
+                    sms = 00.000
+                    #quo = (query)(double)
+                    quo = float(query)
+                    tm = quo+sms
+                    if rn >= tm:
+                        stop = True
+                        speak("Alarm Successful")   
+
+
         elif 'how are you' in query.lower() or 'are you ok' in query.lower() or 'are you okay' in query.lower() or 'are you fine' in query.lower():
             slo = ['I\'m fine thank you sir','Oh,,I\'m all well sir']
             speak(random.choice(slo))     
@@ -408,6 +1034,25 @@ if __name__ == "__main__":
             speak("okay sir, opening Python 3.6.8")
             pythonPath = "C://Users//Dell//Desktop//Python 3.6.8//python.exe"
             os.startfile(pythonPath)
+
+        elif 'into binary'in query.lower():
+            query = takeCommand()
+            query = query.replace("into binary", " ")
+            speak(f"Converting {query} into Binary Code")
+            st = query
+            bi = ' '.join(format(ord(x), 'b') for x in st)
+            speak(f"{query} in Binary Format is {bi}")
+            print(f"{query} in Binary Format is {bi}")
+
+        elif 'in binary'in query.lower():
+            query = takeCommand()
+            query = query.replace("in binary", " ")
+            speak(f"Converting {query} into Binary Code")
+            st = query
+            bi = ' '.join(format(ord(x), 'b') for x in st)
+            speak(f"{query} in Binary Format is {bi}")
+            print(f"{query} in Binary Format is {bi}")
+
             
         elif 'who are you' in query.lower():
             speak("I am Jarvis , your very own A I assistant")
@@ -418,23 +1063,22 @@ if __name__ == "__main__":
         elif 'when is my birthday' in query.lower():
             speak("Sir, your birthday is on the eleventh of september each year")
 
-        elif 'what is my DOB' in query.lower() or 'what is my date of birth' in query.lower():
+        elif 'what is my DOB' in query.lower() or 'what is my date of birth' in query.lower() or 'my birthday' in query.lower():
             speak("Sir, your date of birth is eleven..nine..two thousand and six")         
-
-        elif 'open google' in query.lower():
-            speak("Okay sir, opening Google.com")
-            webbrowser.open("google.com")
 
         elif 'open control panel' in query.lower():
             speak("Okay sir,,opening Control Panel")
             codePath = "C://Users//Dell//Desktop//Control Panel - Shortcut.lnk"
             os.startfile(codePath)    
 
-        elif 'my location' in query.lower() or 'my latitude and longitude'in query.lower():
+        elif 'my location' in query.lower() or ' latitude and longitude'in query.lower():
             g = geocoder.ip('me')
             print("Latitude:",g.latlng) 
             speak("Sir, our current Latitudes and Longitudes are ")   
             speak(g.latlng)
+
+        elif 'corona' in query.lower() or 'covid' in query.lower():
+            webbrowser.open("https://www.worldometers.info/coronavirus/country/india/")
 
         elif 'where are you' in query.lower():
             speak("Oh..I,,am,,right,,here,,sir")    
@@ -446,9 +1090,47 @@ if __name__ == "__main__":
         elif 'open gmail' in query.lower():
             speak("Okay sir, opening G Mail.com")
             webbrowser.open("www.gmail.com")
+
+        elif 'remember' in query.lower() or 'keep in mind' in query.lower():
+            query = query.replace("remember", " ") 
+            rem = query
+            speak("Okay sir..I will that in mind  "+rem)
+
+        elif 'remind' in query.lower():
+            speak("You asked me to remember "+rem)  
+
+        elif 'meet' in query.lower():
+            query = query.replace("meet"," ")
+            nm = query
+            speak("Nice to meet you!!"+nm)
+
+        elif 'caller' in query.lower() and 'id' in query.lower() or 'ID' in query.lower() or 'Id' in query.lower():
+            speak("Initiating Caller ID Interface")
+            time.sleep(1.5)
+            speak("Please type the phone number..Sir!!")
+            cell = input("Enter Phone Number: ")
+            z = phonenumbers.parse(cell, None)
+            posble = phonenumbers.is_possible_number(z)
+            if posble==True:
+                speak("Sir..It\'s an active phone number")
+            else:
+                speak("Sir..I don\'t think this is an active number!!It may be a fake number or an inactive number!!")
+            phone_country(cell)      
+            c = pycountry.countries.get(alpha_2=phone_country(cell))
+            speak(f"The number appears to be of {c.name} origin or from the {c.official_name}")
+
+
+        elif 'web' in query.lower() or 'website' in query.lower():
+            speak("Initiating Advanced Web Search Interface")
+            speak("Okay sir..which website are you planning to visit..")  
+            query = takeCommand()
+            ht = "https://www."
+            co = ".com"
+            webbrowser.open(ht+query+co)
+
    
         elif 'open amazon.in' in query.lower() or 'open amazon india' in query.lower():
-            speak("Okay sir, opening Amazon dot India")
+            speak("Okay sir, opening Amazon.in")
             webbrowser.open("www.amazon.in")
 
         elif 'open prime video' in query.lower() or 'open amazon prime video' in query.lower():
@@ -456,11 +1138,11 @@ if __name__ == "__main__":
             webbrowser.open("www.primevideo.com")
 
         elif 'open amazon.com' in query.lower() or 'open amazon international' in query.lower():
-            speak("Okay sir, opening Amazon dot com")
+            speak("Okay sir, opening Amazon.com")
             webbrowser.open("wwww.amazon.com")
 
         elif 'open apple.com' in query.lower() or 'open apple' in query.lower():
-            speak("Okay sir, opening Apple dot com")
+            speak("Okay sir, opening Apple.com")
             webbrowser.open("www.apple.com")        
 
         elif 'open outlook' in query.lower() or 'open outlook website' in query.lower():
@@ -468,18 +1150,18 @@ if __name__ == "__main__":
             webbrowser.open("outlook.live.com")
 
         elif 'open github' in query.lower() or 'open github website' in query.lower():
-            speak("Okay sir, opening GitHub dot organisation")
+            speak("Okay sir, opening GitHub")
             webbrowser.open("www.github.com")
 
         elif 'open facebook' in query.lower() or 'open facebook website' in query.lower():
-            speak("Okay sir, opening FaceBook dot Incorporation")
+            speak("Okay sir, opening FaceBook ")
             webbrowser.open("www.facebook.com")
 
         elif 'open reddit' in query.lower() or 'open reddit mail' in query.lower():
             speak("Okay sir, opening Reddit Mail")
             webbrowser.open("www.reddit.com")
 
-        elif 'where do I search for flight tickets' in query.lower() or 'tell me a flight booking website' in query.lower():
+        elif 'flight tickets' in query.lower() or 'tell me a flight booking website' in query.lower():
             speak("Sir,,How about you search in Google Flights")
             speak("Should I open it for you sir")   
 
@@ -509,7 +1191,12 @@ if __name__ == "__main__":
 
         elif 'open maps' in query.lower():
             speak("Okay sir, opening Google Maps") 
-            webbrowser.open("maps.google.com")                                    
+            speak("What place are you looking for sir..")  
+            query = takeCommand()
+            sg = "https://www.google.com/maps/search/" 
+            og = "/@13.0629315,77.524434,14z/data=!3m1!4b1"
+            webbrowser.open(sg+query+og)
+            speak("Results found for " +query)
 
         elif 'open linked in' in query.lower():
             speak("Okay sir, opening Linked In")
@@ -537,17 +1224,18 @@ if __name__ == "__main__":
             speak("Ha..Ha..Ha..Ha") 
             print("Ha..Ha..Ha..Ha")
 
-        elif 'head and tails' in query.lower() or 'toss' in query.lower():
+        elif 'heads and tails' in query.lower() or 'toss' in query.lower():
             speak("What do you choose sir,,")
             query = takeCommand()
+            playsound("C:\\Users\\Dell\\Desktop\\J.A.R.V.I.S (v2.0)\\WhatsApp Audio 2020-06-07 at 2.41.46 PM.mpeg")
             if 'heads' in query.lower():
+                speak("Heads is the call..")
                 lo = ['Well played, You won sir,,','Sorry,,you lost sir,,']
                 speak(random.choice(lo))
-                print(random.choice(lo))
             elif 'tails' in query.lower():
+                speak("Tails is the call..")
                 lo = ['Well played, You won sir,,','Sorry,,you lost sir,,']
                 speak(random.choice(lo))
-                print(random.choice(lo))
             else:
                 speak("Unknown Input..sir,,")    
 
@@ -571,10 +1259,12 @@ if __name__ == "__main__":
                 speak(f"{key} is equal to {val}")
             
         elif 'you are mean' in query.lower() or 'bad' in query.lower():
-            speak("Sorry,,if  I was mean to you sir,, ")    
+            speak("Sorry..sir..if..I was mean to you sir ")    
  
-        elif 'time' in query.lower():
-            strTime = datetime.datetime.now().strftime("%H:%M:%S")    
+        elif 'time' in query.lower() and 'what\'s' in query.lower() or 'what' in query.lower():
+            strTime = datetime.datetime.now().strftime("%H:%M:%S")
+            olo = (strTime)[0]
+            print(olo)   
             speak(f"Sir, the time is {strTime}")
 
         elif 'despacito' in query.lower():
@@ -588,14 +1278,12 @@ if __name__ == "__main__":
             cv2.waitKey(0)
             cv2.destroyAllWindows()
          
-
         elif 'battery' in query.lower():
             speak(f"Sir,,your current battery percentage is at {psutil.sensors_battery().percent}%")
             print(f"Sir,,your current battery percentage is at {psutil.sensors_battery().percent}%")
             if psutil.sensors_battery().percent <40:
                 speak("Sir,,your device is on low battery..I suugest you charge it now..")
                 print("Sir,,your device is on low battery..I suugest you charge it now..")
-
 
         elif 'shape of you' in query.lower():
             speak("Okay sir,,playing Shape of You by Ed Sheeran")
@@ -663,6 +1351,45 @@ if __name__ == "__main__":
             speak("Okay sir,,opening Calculator")
             codePath = "C://Users//Dell//Desktop//pycharm projects//Calculator.lnk"
             os.startfile(codePath)
+
+        elif 'routine' in query.lower() or 'schedule' in query.lower() or 'what do i have' in query.lower() or 'do i have plans' in query.lower() or 'am i busy' in query.lower():                
+    # The file token.pickle stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+            if os.path.exists('token.pickle'):
+                with open('token.pickle', 'rb') as token:
+                    creds = pickle.load(token)
+    # If there are no (valid) credentials available, let the user log in.
+                    if not creds or not creds.valid:
+                        if creds and creds.expired and creds.refresh_token:
+                            creds.refresh(Request())
+                    else:
+                        flow = InstalledAppFlow.from_client_secrets_file(
+                        'C://Users//Dell//Downloads//client_secret.json', SCOPES)
+                        creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+                        with open('token.pickle', 'wb') as token:
+                            pickle.dump(creds, token)
+
+                    service = build('calendar', 'v3', credentials=creds)
+
+    # Call the Calendar API
+                    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+                    print('Here\'s your routine for the day')
+                    print('Here\'s your routine for the day')
+                    events_result = service.events().list(calendarId='primary', timeMin=now,
+                                        maxResults=10, singleEvents=True,
+                                        orderBy='startTime').execute()
+                    events = events_result.get('items', [])
+
+                    if not events:
+                        print('No upcoming events found..sir')
+                        speak('No upcoming events found..sir')
+                    for event in events:
+                        start = event['start'].get('dateTime', event['start'].get('date'))
+                        print(start, event['summary'])
+                        speak(start, event['summary'])
+
             
         elif 'open powerpoint' in  query.lower() or 'open power point' in query.lower() or 'open PowerPoint' in query.lower() or 'PowerPoint' in query.lower():
             speak("Okay sir,,opening Microsoft Powerpoint 2013")
@@ -704,22 +1431,40 @@ if __name__ == "__main__":
             codePath = "C://Users//Dell//Desktop//pycharm projects//Microsoft Store.lnk"
             os.startfile(codePath)
     
-        elif 'today\'s news' in query.lower():
+        elif 'news' in query.lower():
             speak("okay sir, here are the latest news from Google News")
             for news in news_list:
                 print(news.title.text)
                 print(news.pubDate.text)
                 print("-"*60)
                 speak(news.title.text)
+                
+        elif 'quote of the day' in query.lower() or 'quote' in query.lower():
+            res=requests.get("https://www.brainyquote.com/quote_of_the_day")
+            soup=BeautifulSoup(res.text,'lxml')
+            image_quote = soup.find('img', {'class':'p-qotd'})
+            print(image_quote['alt'])   
+            speak(image_quote['alt'])
 
-        elif 'today\'s news' in query.lower():
-            speak("okay sir, here are the latest news from sports News")
-            for news in news_list:
-                print(news.title.text)
-                print(news.pubDate.text)
-                print("-"*60)
-                speak(news.title.text)        
-            
+        elif 'create' in query.lower() or 'add' in query.lower() or 'make' in query.lower() and 'folder' in query.lower(): 
+            speak("Creating a new folder!!!")
+            speak("What would you like to name it..sir!!")
+            query = takeCommand()
+            dirName = query
+            try:
+                path = 'C://Users//Dell//Desktop//'
+                os.mkdir(path+dirName)
+                print("Directory ",dirName,"Created")
+                speak(f"A new folder with the name {dirName} created Successfully sir!!")
+            except FileExistsError:
+                print("Directory ",dirName,"already exists")
+                speak(f"Sir..I believe a folder with the name {dirName} already exists!!")
+            speak("Should I open it for you..Sir!!")
+            query = takeCommand()
+            if 'sure' in query.lower() or 'yes' in query.lower() or 'yeah' in query.lower() or 'yep' in query.lower() or 'ok' in query.lower() or 'okay' in query.lower() or 'open' in query.lower():
+                folder = path+dirName
+                webbrowser.open(folder)     
+
         elif 'open bing' in query.lower():
             speak("Okay sir, opening Bing.com")
             webbrowser.open("www.bing.com")   
@@ -739,22 +1484,29 @@ if __name__ == "__main__":
                 speak("Sir,,the humidity is low ,, and so it\'s dry")
             else:
                 speak("Sir,,the humidity is high,,so it\'s very humid or wet")
-            
-            
-        elif 'email to me' in query.lower():
+                
+        elif 'email' in query.lower():
             speak("Okay sir...Initiating,,Send,,Email,,Interface")
-            try:
-                speak("What should I say?")
-                content = takeCommand()
-                to = "shankarappabasavegowda06864@gmail.com"    
-                sendEmail(to, content)
-                speak("Email sent sucessfully sir!")
+            recipient = takeCommand()
+            if 'me' in recipient:
+                try:
+                    speak("What should I say?")
+                    content = takeCommand()
+                    to = "modernnerds2588@gmail.com"    
+                    sendEmail(to, content)
+                    speak("Email sent sucessfully sir!")
                       
-
-        
-            except Exception as e:
-                print(e)
-                speak("Sorry sir, the email could  not be sent") 
-
-
-
+                except:
+                    speak("Sorry sir, the email could  not be sent") 
+        else:
+            query = query
+            try:
+                res = client.query(query)
+                results = next(res.results).text
+                print(results)
+                speak(results)
+                    
+            except:
+                results = wikipedia.summary(query, sentences=2)
+                print(results)
+                speak(results)                    
